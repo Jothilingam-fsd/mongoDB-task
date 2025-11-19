@@ -1,0 +1,19 @@
+{
+  "name": "zen-class-program",
+  "version": "1.0.0",
+  "description": "REST API for Zen Class program data management and queries using MongoDB and Node.js",
+  "main": "app.js",
+  "scripts": {
+    "start": "node app.js",
+    "dev": "nodemon app.js"
+  },
+  "author": "Zen Class Developer",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.21.2",
+    "mongoose": "^7.8.7"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.22"
+  }
+}
