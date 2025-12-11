@@ -1,82 +1,120 @@
-1. Find all the topics and tasks which are taught in the month of October
+---------------------------------------------
+MONGODB QUERIES – ZEN CLASS PROGRAMME
+---------------------------------------------
 
-// Topics taught in October (any year)
-db.topics.find({
-  teachingDate: {
-    $gte: new ISODate("2020-10-01T00:00:00Z"),
-    $lt: new ISODate("2020-11-01T00:00:00Z")
+1️⃣ Question:
+Find all the topics and tasks which are taught in the month of October.
+
+Query:
+db.topics.aggregate([
+  {
+    $match: {
+      topic_date: {
+        $gte: ISODate("2020-10-01"),
+        $lte: ISODate("2020-10-31")
+      }
+    }
+  },
+  {
+    $lookup: {
+      from: "tasks",
+      localField: "topic_id",
+      foreignField: "topic_id",
+      as: "tasks"
+    }
   }
-}).pretty()
+]);
 
-// Tasks assigned in October (any year)
-db.tasks.find({
-  assignedDate: {
-    $gte: new ISODate("2020-10-01T00:00:00Z"),
-    $lt: new ISODate("2020-11-01T00:00:00Z")
-  }
-}).pretty()
+-------------------------------------------------
 
-2. Find all the company drives which appeared between 15 Oct 2020 and 31 Oct 2020
+2️⃣ Question:
+Find all the company drives which appeared between 15-Oct-2020 and 31-Oct-2020.
 
+Query:
 db.company_drives.find({
-  driveDate: {
-    $gte: new ISODate("2020-10-15T00:00:00Z"),
-    $lte: new ISODate("2020-10-31T23:59:59Z")
+  drive_date: {
+    $gte: ISODate("2020-10-15"),
+    $lte: ISODate("2020-10-31")
   }
-}).pretty()
+});
 
-3. Find all the company drives and students who appeared for the placement
+-------------------------------------------------
 
+3️⃣ Question:
+Find all the company drives and the students who appeared for the placement.
+
+Query:
 db.company_drives.aggregate([
   {
     $lookup: {
       from: "users",
-      localField: "appearedStudents",
-      foreignField: "_id",
-      as: "studentsAppeared"
+      localField: "student_ids",
+      foreignField: "user_id",
+      as: "students"
     }
   }
-]).pretty()
+]);
 
-4. Find the number of problems solved by the user in codekata
+-------------------------------------------------
 
-// Replace USER_ID with the actual user's _id
+4️⃣ Question:
+Find the number of problems solved by each user in Codekata.
+
+Query:
 db.codekata.aggregate([
-  { $match: { user: ObjectId("USER_ID") } },
   {
     $group: {
-      _id: "$user",
-      totalProblemsSolved: { $sum: "$problemsSolved" }
+      _id: "$user_id",
+      totalProblemsSolved: { $sum: "$problems_solved" }
     }
   }
-])
+]);
 
-5. Find all the mentors who have mentees count more than 15
+-------------------------------------------------
 
+5️⃣ Question:
+Find all mentors who have more than 15 mentees.
+
+Query:
 db.mentors.find({
-  $expr: { $gt: [{ $size: "$mentees" }, 15] }
-}).pretty()
+  mentee_count: { $gt: 15 }
+});
 
-6. Find the number of users who are absent and task is not submitted between 15 Oct 2020 and 31 Oct 2020
+-------------------------------------------------
 
-// First, find users absent in the date range
-const absentUsers = db.attendance.distinct("user", {
-  date: {
-    $gte: new ISODate("2020-10-15T00:00:00Z"),
-    $lte: new ISODate("2020-10-31T23:59:59Z")
+6️⃣ Question:
+Find the number of users who were absent AND did not submit tasks 
+between 15-Oct-2020 and 31-Oct-2020.
+
+Query:
+db.attendance.aggregate([
+  {
+    $match: {
+      date: {
+        $gte: ISODate("2020-10-15"),
+        $lte: ISODate("2020-10-31")
+      },
+      status: "absent"
+    }
   },
-  status: "absent"
-})
-
-// Then, find users who did not submit tasks in the same date range
-const usersWithUnsubmittedTasks = db.tasks.distinct("assignedTo", {
-  assignedDate: {
-    $gte: new ISODate("2020-10-15T00:00:00Z"),
-    $lte: new ISODate("2020-10-31T23:59:59Z")
+  {
+    $lookup: {
+      from: "tasks",
+      localField: "user_id",
+      foreignField: "user_id",
+      as: "taskDetails"
+    }
   },
-  submissionStatus: false
-})
+  {
+    $match: {
+      "taskDetails.submitted": false
+    }
+  },
+  {
+    $count: "absent_and_not_submitted"
+  }
+]);
 
-// Finally, find intersection count of both arrays
-const absentAndUnsubmittedUsers = absentUsers.filter(userId => usersWithUnsubmittedTasks.includes(userId))
-print("Number of users absent and task not submitted between 15 Oct 2020 and 31 Oct 2020:", absentAndUnsubmittedUsers.length)
+-------------------------------------------------
+END OF FILE
+-------------------------------------------------
